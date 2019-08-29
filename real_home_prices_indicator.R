@@ -44,7 +44,7 @@ ggplot(data=real.res.prices.recent) +
 ggsave(filename = "./charts/rhp_recessions_ind_1970_pres_nr.png")
 
 # mark declines of 'critical.change.rate' % or more
-decline.indexes <- flag.declines(real.res.prices.recent$Real.Home.Price.Index, 0.03)
+decline.indexes <- flag.drops.pct(real.res.prices.recent$Real.Home.Price.Index, 0.03)
 real.res.prices.recent[decline.indexes,]
 
 # Real home prices since 1970 with recessions shaded
@@ -66,7 +66,7 @@ real.res.prices.midcent <- real.res.prices.schiller[
   real.res.prices.schiller$Date.Formatted<as.Date("1970-01-01"),]
 head(real.res.prices.midcent)
 tail(real.res.prices.midcent)
-decline.indexes.midcent <- flag.declines(real.res.prices.midcent$Real.Home.Price.Index, 0.03)
+decline.indexes.midcent <- flag.drops.pct(real.res.prices.midcent$Real.Home.Price.Index, 0.03)
 recessions.midcent <- recessions[recessions$Peak>=min(real.res.prices.midcent$Date) &
                                    recessions$Peak<=max(real.res.prices.midcent$Date),]
 
@@ -100,7 +100,7 @@ ggplot(data=real.res.prices.modern) +
   geom_rect(data=recessions.modern, aes(xmin=Peak, xmax=Trough, ymin=-Inf, ymax=+Inf), fill='black', alpha=0.3)
 
 # mark declines of 'critical.change.rate' % or more
-decline.indexes <- flag.declines(real.res.prices.modern$Real.Home.Price.Index, 0.03)
+decline.indexes <- flag.drops.pct(real.res.prices.modern$Real.Home.Price.Index, 0.03)
 real.res.prices.modern[decline.indexes,]
 
 # Real home prices since 1953 with recessions shaded
@@ -118,7 +118,7 @@ ggsave(filename = "./charts/rhp_recessions_ind_1953_pres.png")
 ### Nominal home prices
 
 # mark declines of 3% or more
-decline.indexes <- flag.declines(real.res.prices.modern$Nominal.Home.Price.Index, 0.03)
+decline.indexes <- flag.drops.pct(real.res.prices.modern$Nominal.Home.Price.Index, 0.03)
 real.res.prices.modern[decline.indexes,]
 
 ggplot(data=real.res.prices.modern) + 
@@ -133,7 +133,7 @@ ggplot(data=real.res.prices.modern) +
 ggsave(filename = "./charts/nominal_hp_declines_3pct.png")
 
 # mark declines of 1% or more
-decline.indexes <- flag.declines(real.res.prices.modern$Nominal.Home.Price.Index, 0.01)
+decline.indexes <- flag.drops.pct(real.res.prices.modern$Nominal.Home.Price.Index, 0.01)
 real.res.prices.modern[decline.indexes,]
 
 ggplot(data=real.res.prices.modern) + 
@@ -162,10 +162,10 @@ head(recessions.old)
 tail(recessions.old)
 
 # mark declines of 'critical.change.rate' % or more
-decline.indexes <- flag.declines(real.res.prices.old$Real.Home.Price.Index, 0.03)
+decline.indexes <- flag.drops.pct(real.res.prices.old$Real.Home.Price.Index, 0.03)
 real.res.prices.old[decline.indexes,]
 
-# Real home prices since 1970 with recessions shaded
+# Real home prices with recessions shaded
 # and declines of 3% or more from the previous peak flagged
 ggplot(data=real.res.prices.old) + 
   geom_line(aes(x=Date.Formatted,y=Real.Home.Price.Index),color="blue") + 
@@ -176,4 +176,25 @@ ggplot(data=real.res.prices.old) +
   geom_rect(data=recessions.old, aes(xmin=Peak, xmax=Trough, ymin=-Inf, ymax=+Inf), fill="black", alpha=0.3) + 
   geom_vline(xintercept=real.res.prices.old$Date.Formatted[decline.indexes], color="red")
 ggsave(filename = "./charts/rhp_recessions_ind_1890_1953.png")
+
+
+### Simple Moving Average Method
+
+# flag drops w/ simple moving average, 24-month lookback
+start.val <- real.res.prices.schiller$Real.Home.Price.Index[real.res.prices.schiller$Date.Formatted=="1953-01-01"]
+decline.indexes <- flag.drops.sma(real.res.prices.modern$Real.Home.Price.Index, 18, start.val)
+real.res.prices.modern[decline.indexes,]
+
+# Real home prices since 1953 with recessions shaded
+# and declines of 3% or more from the previous peak flagged
+ggplot(data=real.res.prices.modern) + 
+  geom_line(aes(x=Date.Formatted,y=Real.Home.Price.Index),color="blue") + 
+  ggtitle("Real Home Prices Since 1953\nDrops Below SMA in Red") + 
+  xlab("Date") + ylab("Real Home Prices") + 
+  theme_light() + theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_hline(yintercept=0) + 
+  geom_rect(data=recessions.modern, aes(xmin=Peak, xmax=Trough, ymin=-Inf, ymax=+Inf), fill="black", alpha=0.3) + 
+  geom_vline(xintercept=real.res.prices.modern$Date.Formatted[decline.indexes], color="red")
+ggsave(filename = "./charts/rhp_recessions_ind_1953_pres_sma.png")
+
 
