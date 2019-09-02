@@ -1,11 +1,12 @@
 library(ggplot2)
 source("label_trends.R")
 
-# look at median sales price instead (closer to real-time indicator)
+# look at median sales price instead
 # https://fred.stlouisfed.org/series/MSPUS
 # quarterly, all houses sold
 MSPUS <- read.csv("./raw_data/MSPUS.csv", stringsAsFactors = FALSE)
 head(MSPUS)
+tail(MSPUS)
 MSPUS$DATE <- as.Date(MSPUS$DATE)
 
 # https://fred.stlouisfed.org/series/MSPNHSUS
@@ -109,4 +110,24 @@ ggplot(data=hp.data) +
 # for (i in 1:nrow(hp.data)) {
 #   
 # }
+
+# mark declines of 'critical.change.rate' % or more in 4-quarter MA
+plot(hp.data$DATE,hp.data$rmhsp.ma.4,type="l")
+hp.data.ma <- hp.data[!is.na(hp.data$rmhsp.ma.4),]
+decline.indexes <- flag.drops.pct(hp.data.ma$rmhsp.ma.4, 0.03)
+hp.data.ma[decline.indexes,]
+head(decline.indexes)
+
+# plot 4-quarter MA with recessions in grey, declines of 3% or more in red
+ggplot(data=hp.data.ma) + 
+  geom_line(aes(x=DATE,y=rmhsp.ma.4),color="blue") + 
+  ggtitle("Real Median Home Sales Prices 4-Quarter MA\nDeclines of 3% in Red") + 
+  xlab("Date") + ylab("Prices 4-Quarter MA") + 
+  theme_light() + theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_hline(yintercept=0) + 
+  geom_rect(data=recessions.trimmed, aes(xmin=Peak, xmax=Trough, ymin=-Inf, ymax=+Inf), fill="black", alpha=0.3) + 
+  geom_vline(xintercept=hp.data.ma$DATE[decline.indexes], color="red")
+# ggsave(filename = "./charts/median_hsp_ma4_declines_3pct.png")
+
+
 
