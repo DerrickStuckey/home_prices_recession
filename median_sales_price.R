@@ -63,10 +63,21 @@ ggplot(data=hp.data) +
 # ggsave("./charts/median_hsp_w_recessions.png")
 
 # mark declines of 'critical.change.rate' % or more
-decline.indexes <- flag.drops.pct(hp.data$rmhs, 0.05)
+decline.indexes <- flag.drops.pct(hp.data$rmhs, 0.03)
 hp.data[decline.indexes,]
 head(decline.indexes)
 # looks to be seasonal as many big drops are in July
+
+# plot with declines of 3% or more flagged
+ggplot(data=hp.data) + 
+  geom_line(aes(x=DATE,y=rmhs),color="blue") + 
+  ggtitle("Real Median Home Sales Prices\nDeclines of 3% in Red") + 
+  xlab("Date") + ylab("Deflated Median Home Sales Prices") + 
+  theme_light() + theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_hline(yintercept=0) + 
+  geom_rect(data=recessions.trimmed, aes(xmin=Peak, xmax=Trough, ymin=-Inf, ymax=+Inf), fill='black', alpha=0.3) + 
+  geom_vline(xintercept=hp.data$DATE[decline.indexes], color="red")
+# ggsave("./charts/median_hsp_declines_3pct.png")
 
 # YoY change and SMA
 hp.data$rmhsp.yoy <- NA
@@ -114,9 +125,9 @@ ggplot(data=hp.data) +
 # mark declines of 'critical.change.rate' % or more in 4-quarter MA
 plot(hp.data$DATE,hp.data$rmhsp.ma.4,type="l")
 hp.data.ma <- hp.data[!is.na(hp.data$rmhsp.ma.4),]
-decline.indexes <- flag.drops.pct(hp.data.ma$rmhsp.ma.4, 0.03)
-hp.data.ma[decline.indexes,]
-head(decline.indexes)
+decline.indexes.ma <- flag.drops.pct(hp.data.ma$rmhsp.ma.4, 0.03)
+hp.data.ma[decline.indexes.ma,]
+head(decline.indexes.ma)
 
 # plot 4-quarter MA with recessions in grey, declines of 3% or more in red
 ggplot(data=hp.data.ma) + 
@@ -126,7 +137,7 @@ ggplot(data=hp.data.ma) +
   theme_light() + theme(plot.title = element_text(hjust = 0.5)) + 
   geom_hline(yintercept=0) + 
   geom_rect(data=recessions.trimmed, aes(xmin=Peak, xmax=Trough, ymin=-Inf, ymax=+Inf), fill="black", alpha=0.3) + 
-  geom_vline(xintercept=hp.data.ma$DATE[decline.indexes], color="red")
+  geom_vline(xintercept=hp.data.ma$DATE[decline.indexes.ma], color="red")
 # ggsave(filename = "./charts/median_hsp_ma4_declines_3pct.png")
 
 
